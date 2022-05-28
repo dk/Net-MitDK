@@ -1,0 +1,99 @@
+#!env perl
+use strict;
+use warnings;
+use Net::MitDK;
+use Getopt::Long;
+
+# */10 * * * * nobody mitdk-renew-lease -a
+
+my %opt = (
+	profile    => 'default',
+	help       => 0,
+	all        => 0,
+	verbose    => 0,
+	loop       => 0,
+);
+
+sub usage
+{
+	print <<USAGE;
+
+$0
+
+   --profile       - Profile name ( $opt{profile} )
+   --all|-a        - All profiles
+   --verbose|-v    - Verbose
+   --loop|-l       - Never exit, renew every 10 minutes
+   --help
+
+USAGE
+	exit 1;
+}
+
+GetOptions(\%opt,
+	"help|h",
+	"all|a",
+	"verbose|v",
+	"loop|l",
+	"profile|s=s",
+) or usage;
+
+$opt{help} and usage();
+
+sub renew
+{
+	my $profile = shift;
+	my ($e, $error) = Net::MitDK->new(profile => $profile);
+	print "loaded profile $profile, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
+	die "error: $error\n" unless $e;
+
+	my $maybe_expired = time > $e->token->{dpp}->{expires_on};
+	if ( $maybe_expired && $e->config->{renewer}->{expired} ) {
+		print "is expired and notification was done already, skipping\n" if $opt{verbose};
+		return;
+	}
+
+	if ( exists $e->config->{renewer}->{expired}) {
+		delete $e->config->{renewer}->{expired};
+		$e->update_config;
+	}
+
+	my $ok;
+	($ok, $error) = $e->renew_lease->wait;
+	if ( !$ok ) {
+		if ( $maybe_expired ) {
+			print "will skip this error next time\n" if $opt{verbose};
+			$e->config->{renewer}->{expired} = 1;
+			$e->update_config;
+		}
+		die "error: $error\n";
+	}
+
+	print "renewed, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
+}
+
+
+AGAIN:
+if ( $opt{all}) {
+	my $exitcode = 0;
+	for (Net::MitDK::ProfileManager->new->list) {
+		eval { renew($_) };
+		next unless $@;
+		warn $@;
+		$exitcode = 1;
+	}
+	exit $exitcode unless $opt{loop};
+} else {
+	eval { renew($opt{profile}); };
+	if ( $@ ) {
+		if ( $opt{loop} ) {
+			warn $@;
+		} else {
+			die $@;
+		}
+	}
+}
+if ($opt{loop}) {
+	sleep(600);
+	goto AGAIN;
+}

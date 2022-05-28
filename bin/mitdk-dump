@@ -1,0 +1,82 @@
+#!env perl
+use strict;
+use warnings;
+use Net::MitDK;
+use Getopt::Long;
+
+my %opt = (
+	profile    => 'default',
+	'list-messages' => 0,
+	output     => 'mitdk.mbox',
+	help       => 0,
+);
+
+my $version = 0.01;
+
+sub usage
+{
+	print <<USAGE;
+
+$0
+
+   --profile       - Profile name ( $opt{profile} )
+   --list-messages - Display list of available messages
+   --output        - output mail box ( $opt{output} )
+   --help 
+
+USAGE
+	exit 1;
+}
+
+GetOptions(\%opt,
+	"help|h",
+	"profile|s=s",
+	"list-messages|m",
+	"output|o=s",
+) or usage;
+
+$opt{help} and usage();
+
+
+my ($e, $error) = Net::MitDK->new(profile => $opt{profile});
+die "error: $error\n" unless $e;
+
+print "Logging in...\n";
+my ($m);
+
+($m, $error) = $e->mailboxes->wait;
+die "error: $error\n" if defined $error;
+
+print "Getting list of folders...\n";
+my ($folders, $list, $msg);
+($folders, $error) = $e->folders->wait;
+die "error: $error\n" if defined $error;
+
+print "Getting list of messages in Inbox...\n";
+($list, $error) = $e->list_all_messages(undef, $folders->{Inbox}->{id})->wait;
+die "error: $error\n" if defined $error;
+
+print "Got ", scalar(@$list), " messages ... \n";
+if ( $opt{'list-messages'} ) {
+	my $n = 0;
+	for my $msg ( @$list ) {
+		$n++;
+		$msg->{createdDateTime} =~ m/^(.*)T/;
+		print "#$n $1: $msg->{label} from $msg->{sender}->{label}\n";
+	}
+	exit;
+}
+
+open F, ">", $opt{output} or die "Cannot write $opt{output}:$!";
+
+my $n = 0;
+for my $msg ( @$list ) {
+	$n++;
+	print "Fetching #$n: $msg->{label} from $msg->{receivedDateTime}...\n";
+	my ( $attachments, $error ) = $e->fetch_message_and_attachments( $msg )-> wait;
+	die "error: $error\n" if defined $error;
+	print F $e->assemble_mail($msg, $attachments);
+}
+
+close F;
+print "Saved in $opt{output} as a mailbox. Open in your mail agent an enjoy!\n";
