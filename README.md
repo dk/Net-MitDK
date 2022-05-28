@@ -14,6 +14,8 @@ Unix/Linux
 
 * Install this module by opening command line and typing `cpan Net::MitDK` (with `sudo` if needed)
 
+* Authenticate in NemID as written below
+
 Windows
 -------
 
@@ -21,12 +23,10 @@ Windows
 
 * Install this module by opening command line and typing `cpan Net::MitDK`
 
-* Open command line and run
+* Authenticate in NemID as written below
 
-  `mitdk-install-win32`
-
-that will fire up a browser-based install wizard. Click "Install", then login with 
-NemID credentials.
+* In the examples directory, run `perl win32-batch`. This will create `mitdk-renew.bat`
+and `mitdk-server.bat`.  Put them into your windows Startup folder. Then run them.
 
 * Set up your favourite desktop mail reader so it connects to a POP3 server
 running on server localhost, port 8111. Username is 'default', no password is needed.
@@ -41,7 +41,7 @@ too](https://www.laptopmag.com/articles/how-to-set-up-auto-forwarding-in-outlook
 Upgrading
 ---------
 
-* Stop `mitdk2pop` if running.
+* Stop `mitdk2pop` and `mitdk-renew-lease` if running.
 
 * Install the dev version from github. Download/clone the repo, then run
 
@@ -57,7 +57,7 @@ One-time NemID registration
 ---------------------------
 
 For each user, you will need to go through one-time registration through your
-personal NemID signature. `mitdk-authenticate` will start a small webserver on
+personal NemID signature. Run `mitdk-authenticate` to start a small webserver on
 `http://localhost:9999/`, where you will need to connect to with a browser.
 There, it will will try to show a standard NemID window. You will need to log
 in there, in the way you usually do, using either one-time pads or the NemID
