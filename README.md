@@ -71,6 +71,18 @@ procedure.
 
 Make sure that the content of .mitdk directory is only readable to you.
 
+Lease renewal
+-------------
+
+MidDK only allows sessions for 20 minutes, then it requires a NemID relogin.
+Therefore there is added a daemon, `mitdk-renew-lease`. You can run it from
+cron (unix), or as a standalone program as `mitdk-renew-lease -la` (windows).
+It then will renegotiate a lease every 10 minutes.
+
+If for some reason the lease expires, it will warn you (once), but there's no
+need to restart it after you made a successful relogin with
+`mitdk-authenticate`.
+
 Operations
 ==========
 
