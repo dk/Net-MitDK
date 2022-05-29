@@ -51,9 +51,23 @@ sub quit      { '<p><a href="/abort">Quit the wizard</a><p>' }
 sub main      { '<p><a href="/">Go back to the start</a><p>' }
 sub profile   { '<p><a href="/profile">Change profile (' . $profile . ')</a><p>' }
 
+sub html($)
+{
+	my $html = $_[0];
+	$html = "<html><body>$html</body></html>";
+	HTTP::Response->new( 200, "OK", [
+		'Content-Type'   => 'text/html',
+		'Content-Length' => length($html),
+	], $html)
+}
+
+sub h2($)      { html "<h2>$_[0]</h2>" . main . quit }
+sub h2x($$)    { html "<h2>$_[0]</h2><p>$_[1]" . main . quit } 
+sub error($)   { h2x( 'Error', $_[0] ) }
+
 sub handle_saml
 {
-	my $res = shift;
+	my $resp = shift;
 
 	return error "Cannot get NemID ticket" unless $resp->content =~ /name="(SAMLResponse)" value="(.*?)"/;
 	my $saml = "$1=" . uri_escape($2);
@@ -62,7 +76,7 @@ sub handle_saml
 		'https://gateway.digitalpost.dk/auth/s9/nemlogin/ssoack',
 		Content => $saml
 	))->wait;
-	return error("NemID ticket is received but cannot login to MitDK")
+	return error("NemID ticket is received but cannot login. Did you regsiter at <a href='https://mit.dk'>Digital Post</a>?")
 		unless ($resp->header('Location') // '') =~ m[(com.netcompany.mitdk://nem-callback)\?.*code=([^\&]+)];
 
 	$resp = $ua->request( HTTP::Request::Common::POST(
@@ -85,20 +99,6 @@ sub handle_saml
 
 	return html '<h2>Logged in to MidDK!</h2><p>Now you can start the mitdk server' . mailcheck . main . quit;
 }
-
-sub html($)
-{
-	my $html = $_[0];
-	$html = "<html><body>$html</body></html>";
-	HTTP::Response->new( 200, "OK", [
-		'Content-Type'   => 'text/html',
-		'Content-Length' => length($html),
-	], $html)
-}
-
-sub h2($)      { html "<h2>$_[0]</h2>" . main . quit }
-sub h2x($$)    { html "<h2>$_[0]</h2><p>$_[1]" . main . quit } 
-sub error($)   { h2x( 'Error', $_[0] ) }
 
 my %routes;
 %routes = (

@@ -14,7 +14,7 @@ Unix/Linux
 
 * Install this module by opening command line and typing `cpan Net::MitDK` (with `sudo` if needed)
 
-* Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser, and login to NemID as described below
+* Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser, and login to NemID as described below.
 
 * Add `mitdk-renew-lease -a` in a new cron job as yourself (see 'examples/cron'):
   - Run ``perl -le 'print q(*/10 * * * * ).($_=`which mitdk-renew-lease`,chomp,$_).q( -a)'``
@@ -76,6 +76,11 @@ from MitDK. If that works, the script will create an authorization token and
 save it in your home catalog under `.mitdk/default.profile`. This token will be
 used for password-less logins to the MitDK site. In case it expires, in will
 need to be renewed using the same procedure.
+
+In case you never logged in to the Digital Post, you'll get a login error.
+You shall need to log in manually to the website, eventually fill your phone
+number and contact email, and accept the conditions. After that, the login
+should work.
 
 **Security note**:
 
