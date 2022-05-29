@@ -99,6 +99,7 @@ sub request
 		));
 	tail {
 		my $response = shift;
+		return (undef, $response) unless ref $response;
 
 		my $json;
 		unless ($response->is_success) {
