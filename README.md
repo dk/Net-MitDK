@@ -16,7 +16,9 @@ Unix/Linux
 
 * Authenticate in NemID as written below
 
-* Add `mitdk-renew-lease` in a new cron job as yourself (see 'examples/cron')
+* Add `mitdk-renew-lease -a` in a new cron job as yourself (see 'examples/cron'):
+  - Run `perl -le 'print q(*/10 * * * * ).($_=`which mitdk-renew-lease`,chomp,$_).q( -a)'`
+  - Run `crontab -e` and add this line
 
 Windows
 -------
