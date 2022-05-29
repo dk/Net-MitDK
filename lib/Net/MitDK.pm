@@ -302,6 +302,7 @@ sub fetch_message_and_attachments
 				push @files, [ $ndoc, $nfile++ ];
 			}
 			$nfile = 0;
+			$ndoc++;
 		}
 		return [] unless @files;
 

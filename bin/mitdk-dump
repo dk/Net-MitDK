@@ -1,6 +1,7 @@
 #!env perl
 use strict;
 use warnings;
+#BEGIN { $ENV{IO_LAMBDA_DEBUG} = 'http=2' };
 use Net::MitDK;
 use Getopt::Long;
 
@@ -8,6 +9,7 @@ my %opt = (
 	profile    => 'default',
 	'list-messages' => 0,
 	output     => 'mitdk.mbox',
+	n          => undef,
 	help       => 0,
 );
 
@@ -22,6 +24,7 @@ $0
    --profile       - Profile name ( $opt{profile} )
    --list-messages - Display list of available messages
    --output        - output mail box ( $opt{output} )
+   -n NUMBER       - dump only message NUMBER
    --help 
 
 USAGE
@@ -33,6 +36,7 @@ GetOptions(\%opt,
 	"profile|p=s",
 	"list-messages|l",
 	"output|o=s",
+	"n=i",
 ) or usage;
 
 $opt{help} and usage();
@@ -72,6 +76,7 @@ open F, ">", $opt{output} or die "Cannot write $opt{output}:$!";
 my $n = 0;
 for my $msg ( @$list ) {
 	$n++;
+	next if defined $opt{n} && $opt{n} != $n;
 	print "Fetching #$n: $msg->{label} from $msg->{receivedDateTime}...\n";
 	my ( $attachments, $error ) = $e->fetch_message_and_attachments( $msg )-> wait;
 	die "error: $error\n" if defined $error;
