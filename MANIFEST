@@ -17,4 +17,3 @@ example/procmailrc.forward.srs
 example/procmailrc.local
 example/mitdk2pop.debian
 example/mitdk2pop.freebsd
-example/win32-batch
