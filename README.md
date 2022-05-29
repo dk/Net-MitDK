@@ -14,7 +14,7 @@ Unix/Linux
 
 * Install this module by opening command line and typing `cpan Net::MitDK` (with `sudo` if needed)
 
-* Authenticate in NemID as written below
+* Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser, and login to NemID as described below
 
 * Add `mitdk-renew-lease -a` in a new cron job as yourself (see 'examples/cron'):
   - Run ``perl -le 'print q(*/10 * * * * ).($_=`which mitdk-renew-lease`,chomp,$_).q( -a)'``
