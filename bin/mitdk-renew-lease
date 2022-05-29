@@ -54,7 +54,12 @@ sub renew
 	my $profile = shift;
 	my ($e, $error) = Net::MitDK->new(profile => $profile);
 	die "error (profile=$profile): $error\n" unless $e;
-	die "error (profile=$profile): bad profile\n" unless ref($e->token) eq 'HASH';
+	die "error (profile=$profile): bad profile\n" unless ref($e->config) eq 'HASH';
+
+	unless ( $e->token ) {
+		print "$profile: no first login yet\n" if $opt{verbose};
+		return;
+	}
 
 	print "loaded profile $profile, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
 

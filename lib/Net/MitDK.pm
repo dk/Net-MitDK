@@ -100,15 +100,27 @@ sub request
 	tail {
 		my $response = shift;
 
-		return undef, $response->content
-			unless $response->is_success;
+		my $json;
+		unless ($response->is_success) {
+			if ( $response->header('content-type') eq 'application/json') {
+				eval { $json = decode_json($response->content) };
+				goto PLAIN if $@;
+				goto PLAIN if grep { ! exists $json->{$_} } qw(code message);
+				my $err = "$json->{code}: $json->{message}";
+				$err .= "(" . join(' ', @{$_->{fieldError}}) . ')'
+					if $json->{fieldError} && ref($_->{fieldError}) eq 'ARRAY';
+				return undef, $err;
+			} else {
+			PLAIN:
+				return undef, $response->content
+			}
+		}
 
 		return $response if $options->{raw};
 
 		return undef, 'invalid content'
 			unless $response->header('Content-Type') eq 'application/json';
 
-		my $json;
 		eval { $json = decode_json($response->content) };
 		return undef, "invalid response ($@)"
 			unless $json;
@@ -162,7 +174,6 @@ sub authorization_refresh
 	tail {
 		my ($json, $error) = @_;
 		return $json, $error unless $json;
-
 		return undef, "bad response:".encode_json($json) unless exists $json->{dpp} and exists $json->{ngdp};
 
 		$self->{config}->{token} = $json;
@@ -428,6 +439,19 @@ sub list
 		push @list, $1;
 	}
 	return @list;
+}
+
+sub create
+{
+	my ($self, $profile, %opt) = @_;
+	my $file = $self->homepath . "/$profile.profile";
+
+	if ( -f $file ) {
+		return 2 if $opt{ok_if_exists};
+		return (undef, "Profile exists already");
+	}
+
+	return $self->save($profile, $opt{payload} // {} );
 }
 
 sub lock
