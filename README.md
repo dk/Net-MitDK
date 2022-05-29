@@ -16,6 +16,8 @@ Unix/Linux
 
 * Authenticate in NemID as written below
 
+* Add `mitdk-renew-lease` in a new cron job as yourself (see 'examples/cron')
+
 Windows
 -------
 
@@ -23,10 +25,12 @@ Windows
 
 * Install this module by opening command line and typing `cpan Net::MitDK`
 
-* Authenticate in NemID as written below
+* Open command line and run
 
-* In the examples directory, run `perl win32-batch`. This will create `mitdk-renew.bat`
-and `mitdk-server.bat`.  Put them into your windows Startup folder. Then run them.
+  `mitdk-install-win32`
+
+that will fire up a browser-based install wizard. Click "Install", then login with
+NemID credentials as described below.
 
 * Set up your favourite desktop mail reader so it connects to a POP3 server
 running on server localhost, port 8111. Username is 'default', no password is needed.
@@ -41,7 +45,8 @@ too](https://www.laptopmag.com/articles/how-to-set-up-auto-forwarding-in-outlook
 Upgrading
 ---------
 
-* Stop `mitdk2pop` and `mitdk-renew-lease` if running.
+* Windows: run `mitdk-install-win32` and stop the servers in the browser-based setup.
+Quit the setup.
 
 * Install the dev version from github. Download/clone the repo, then run
 
@@ -52,24 +57,30 @@ Upgrading
 ```
 (or `sudo make install`, depending); `gmake` instead of `make` for Windows.
 
+* Windows: run `mitdk-install-win32` and start the servers in the browser-based setup.
+Quit the setup.
+
 
 One-time NemID registration
 ---------------------------
 
 For each user, you will need to go through one-time registration through your
-personal NemID signature. Run `mitdk-authenticate` to start a small webserver on
-`http://localhost:9999/`, where you will need to connect to with a browser.
-There, it will will try to show a standard NemID window. You will need to log
-in there, in the way you usually do, using either one-time pads or the NemID
-app, and then confirm the request from MitDK. If that works, the script will
-create an authorization token and save it in your home catalog under
-`.mitdk/default.profile`. This token will be used for password-less logins to
-the MitDK site. In case it expires, in will need to be renewed using the same
-procedure.
+personal NemID signature. Run `mitdk-authenticate` to start a small webserver
+on `http://localhost:9999/`, where you will need to connect to with a browser
+(the Windows installer will run it for you).  There, it will will try to show a
+standard NemID window. You will need to log in there, in the way you usually
+do, using either one-time pads or the NemID app, and then confirm the request
+from MitDK. If that works, the script will create an authorization token and
+save it in your home catalog under `.mitdk/default.profile`. This token will be
+used for password-less logins to the MitDK site. In case it expires, in will
+need to be renewed using the same procedure.
 
 **Security note**:
 
 Make sure that the content of .mitdk directory is only readable to you.
+By default, on unix installation, the directory and the files will be readable
+and writable by you and readable by user `nobody`. The latter is needed because
+the mitdk2pop server runs as `nobody` and needs to use the login leases.
 
 Lease renewal
 -------------
@@ -89,10 +100,10 @@ Operations
 Download your mails as a mailbox
 --------------------------------
 
-Note: You probably don't need it, this script is mostly for testing that the access works.
+Note: You most probably won't need it, this script is mostly for testing that the access works.
 
-On command line, type `mitdk-dump`, enter your passwords, and wait until it downloads
-all into mitdk.mbox. Use your favourite mail agent to read it.
+On command line, type `mitdk-dump` and wait until it downloads all into
+mitdk.mbox. Use your favourite mail agent to read it.
 
 Use mit.dk as a POP3 server
 -----------------------------

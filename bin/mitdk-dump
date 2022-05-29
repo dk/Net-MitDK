@@ -31,7 +31,7 @@ USAGE
 GetOptions(\%opt,
 	"help|h",
 	"profile|s=s",
-	"list-messages|m",
+	"list-messages|l",
 	"output|o=s",
 ) or usage;
 

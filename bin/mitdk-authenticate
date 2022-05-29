@@ -1,6 +1,7 @@
 #!perl
 use strict;
 use warnings;
+use IO::Socket::INET;
 use IO::Lambda qw(:all);
 use IO::Lambda::HTTP::Client qw(http_request);
 use IO::Lambda::HTTP::Server;
@@ -18,12 +19,22 @@ use Net::MitDK;
 
 $|++;
 
+my $win32_install = (( $ARGV[0] // '' ) eq '--win32-install');
 my $port = 9999;
 my ($server, $error, $e);
 my ($state, $code_challenge, $code_verifier, $nonce);
 my $ua = IO::Lambda::HTTP::UserAgent->new;
 my $mgr = Net::MitDK::ProfileManager->new;
 my $profile = '';
+
+sub socket_check
+{
+	return IO::Socket::INET-> new(
+		PeerAddr => '127.0.0.1',
+		PeerPort => shift,
+		Proto    => 'tcp',
+	);
+}
 
 sub randstr($) { encode_base64url(join('', map { chr rand(255) } 1..$_[0])) }
 sub init_oauth
@@ -34,6 +45,7 @@ sub init_oauth
 	$code_challenge = encode_base64url(sha256($code_verifier));
 }
 
+sub mailcheck { $win32_install ?  '<p><a href="/testmail">Test MitDK login</a>' : '' }
 sub quit      { '<p><a href="/abort">Quit the wizard</a><p>' }
 sub main      { '<p><a href="/">Go back to the start</a><p>' }
 
@@ -53,6 +65,51 @@ sub error($)   { h2x( 'Error', $_[0] ) }
 
 my %routes;
 %routes = (
+	'/win32_install' => sub { html <<'WIN32_INSTALL' . mailcheck . quit
+<h2>Welcome to the MitDK/Nemid setup</h2><p>
+First you need to install a POP3 proxy server and lease refresh server that will start with Windows.<p>
+<form action="/win32_install_do" method="POST">
+<input type="submit" name="install" value="Install">
+<input type="submit" name="remove" value="Remove">
+<input type="submit" name="stop" value="Stop">
+<input type="submit" name="start" value="Start">
+<input type="submit" name="check" value="Check">
+</form>
+<p><a href="/auth">Skip to MitDK authentication</a><p>
+WIN32_INSTALL
+	},
+
+	'/win32_install_do' => sub {
+		my $req = shift;
+		return (undef, "bad response") unless $req->method eq 'POST';
+		if ( $req->content =~ /^install/) {
+			my $resp = `mitdk-install-win32 install 2>&1`;
+			return error "Something wrong happened:<p><pre>$resp</pre>" unless $resp =~ /LOOKS OKAY/;
+			system "mitdk-install-win32 start";
+			return error 'POP3 proxy installed but not started, please start manually or wait and recheck' unless socket_check(8111);
+			return error 'Refresher server installed but not started, please start manually or wait and recheck' unless socket_check(8112);
+			return h2x 'Proxy installed okay', '<a href="/auth">Continue to MitDK authentication</a>';
+		} elsif ( $req->content =~ /^start/) {
+			system "mitdk-install-win32 start";
+			goto DO_CHECK;
+		} elsif ( $req->content =~ /^stop/) {
+			system "mitdk-install-win32 stop";
+			goto DO_CHECK;
+		} elsif ( $req->content =~ /^remove/) {
+			system "mitdk-install-win32 stop";
+			system "mitdk-install-win32 remove";
+			return h2 'Servers removed';
+		} elsif ( $req->content =~ /^check/) {
+		DO_CHECK:
+			my $pop3 = socket_check(8111);
+			my $refr = socket_check(8112);
+			$_ = "<font color='#".($_ ? '080' : 'c00') . "'>".($_ ? 'running' : 'not running')."</font>"
+				for $pop3, $refr;
+			return h2 "POP3: $pop3<br>Refresher: $refr"; 
+		} else {
+			return $routes{'/'}->();
+		}
+	},
 	'/auth' => sub {
 
 		html <<INIT . quit;
@@ -98,7 +155,7 @@ INIT
 	},
 
 	'/LoginOption.aspx' => sub  {
-		$server->shutdown;
+		$server->shutdown unless $win32_install;
 
 		my $req = shift;
 		$req->uri("https://nemlog-in.mitid.dk".$req->uri);
@@ -141,16 +198,25 @@ INIT
 		my ($ok, $error) = Net::MitDK->new->first_login($json)->wait;
 		return error("Cannot get first re-authorization: $error") unless $ok;
 
-		return html '<h2>Logged in to MidDK!</h2><p>Now you can start the mitdk server';
+		return html '<h2>Logged in to MidDK!</h2><p>Now you can start the mitdk server' . mailcheck . main . quit;
+	},
+
+	'/testmail' => sub {
+		my $e = Net::MitDK->new;
+		my $m;
+		($m, $error) = $e->mailboxes->wait;
+		return error $error unless $m;
+		return html "<h2>Welcome, $m->{ownerName}!</h2><p>".
+			'Looks like you have it configured and logged in correctly' . main . quit;
 	},
 
 	'/abort' => sub {
 		$server->shutdown;
-		return html '<h2>Installation aborted</h2>';
+		return html '<h2>Setup finished.</h2>';
 	},
 );
 
-$routes{'/'} = $routes{'/auth'};
+$routes{'/'} = $win32_install ? $routes{'/win32_install'} : $routes{'/auth'};
 
 ($server, $error) = http_server {
 	my $req = shift;
@@ -178,9 +244,12 @@ $routes{'/'} = $routes{'/auth'};
 } "localhost:$port", timeout => 10;
 die $error unless $server;
 
+if ( $win32_install ) {
+	require Win32API::File;
+	import Win32API::File qw(GetOsFHandle SetHandleInformation HANDLE_FLAG_INHERIT);
+	warn $^E unless SetHandleInformation(GetOsFHandle($server->{socket}), HANDLE_FLAG_INHERIT(), 0);
+}
+
 print "Open a browser and go to this address:\n";
 print "\n   http://localhost:$port/\n\n";
-if ( $^O =~ /win32/i) {
-	system "start /b http://localhost:$port";
-}
 $server->wait;

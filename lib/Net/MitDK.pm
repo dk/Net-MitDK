@@ -26,6 +26,8 @@ sub new
 		%opt,
 	}, $class;
 
+	$self->mgr->homepath( $opt{homepath}) if defined $opt{homepath};
+
 	if ( defined $self->{profile}) {
 		my ($config, $error) = $self->mgr->load( $self->profile );
 		return (undef, $error) unless $config;
@@ -386,7 +388,9 @@ use JSON::XS qw(encode_json decode_json);
 sub new
 {
 	my $self = bless {
-		timestamps => {}
+		timestamps => {},
+		homepath   => undef,
+		readonly   => 0,
 	}, shift;
 	return $self;
 }
@@ -405,12 +409,17 @@ sub _homepath
 	}
 }
 
-sub homepath { _homepath . '/.mitdk' }
+sub readonly { $#_ ? $_[0]->{readonly} = $_[1] : $_[0]->{readonly} }
+
+sub homepath
+{
+	$#_ ? $_[0]->{homepath} = $_[1] : ($_[0]->{homepath} //  _homepath . '/.mitdk')
+}
 
 sub list
 {
 	my $self = shift;
-	my $home = homepath;
+	my $home = $self->homepath;
 
 	return unless -d $home;
 	my @list;
@@ -434,7 +443,7 @@ sub lock
 sub load
 {
 	my ($self, $profile ) = @_;
-	my $file = homepath . "/$profile.profile";
+	my $file = $self->homepath . "/$profile.profile";
 
 	return (undef, "No such profile") unless -f $file;
 	local $/;
@@ -457,9 +466,15 @@ sub save
 {
 	my ($self, $profile, $hash) = @_;
 
-	my $home = homepath;
+	return (undef, "$profile is readonly") if $self->readonly;
+
+	my $home = $self->homepath;
 	unless ( -d $home ) {
 		mkdir $home or return (undef, "Cannot create $home: $!");
+		return (undef, "cannot chmod 0750 $home:$!") unless chmod 0750, $home;
+		my ($name,$passwd,$uid,$gid) = getpwnam('nobody');
+		return (undef, "no user `nobody`") unless defined $name;
+		return (undef, "cannot chown user:$name $home:$!") unless chown $>, $gid, $home;
 	}
 
 	my $json;
@@ -479,7 +494,13 @@ sub save
 	}
 	print $f $json or return (undef, "Cannot save $file:$!");
 	close $f or return (undef, "Cannot save $file:$!");
-	chmod 0600, $file;
+
+	if ( $^O !~ /win32/i) {
+		return (undef, "cannot chmod 0640 $file:$!") unless chmod 0640, $file;
+		my ($name,$passwd,$uid,$gid) = getpwnam('nobody');
+		return (undef, "no user `nobody`") unless defined $name;
+		return (undef, "cannot chown user:$name $file:$!") unless chown $>, $gid, $file;
+	}
 
 	$self->{timestamps}->{$profile} = time;
 
@@ -489,7 +510,7 @@ sub save
 sub remove
 {
 	my ($self, $profile) = @_;
-	unlink homepath . "/$profile.profile" or return (undef, "Cannot remove $profile:$!");
+	unlink $self->homepath . "/$profile.profile" or return (undef, "Cannot remove $profile:$!");
 	return 1;
 }
 
@@ -498,7 +519,7 @@ sub refresh_needed
 	my ( $self, $profile ) = @_;
 	return 0 unless exists $self->{timestamps}->{$profile};
 
-	my $file = homepath . "/$profile.profile";
+	my $file = $self->homepath . "/$profile.profile";
 	my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
 	return 0 unless defined $mtime;
 

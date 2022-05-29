@@ -14,6 +14,7 @@ my %opt = (
 	addr  => '0.0.0.0',
 	debug => 0,
 	help  => 0,
+	config => undef,
 );
 
 my $version = 0.01;
@@ -27,7 +28,8 @@ $0
    --port      - listen on port, 110 by default
    --addr      - listen on address, 0.0.0.0 by default
    --debug     - debug on stderr
-   --help 
+   --config    - location of directory where .mitdk configuration is stored
+   --help
 
 USAGE
 	exit 1;
@@ -36,6 +38,7 @@ USAGE
 GetOptions(\%opt,
 	"port|p=i",
 	"addr|a=s",
+	"config|c=s",
 	"debug",
 	"help|h",
 ) or usage;
@@ -170,8 +173,12 @@ sub pop3_user
 	my ($session, $user) = @_;
 	return fail("already authorized") if exists $session->{obj};
 
-	my ( $obj, $error) = Net::MitDK->new( profile => $user );
+	my ( $obj, $error) = Net::MitDK->new(
+		profile => $user, 
+		( defined $opt{config} ) ? ( homepath => $opt{config} ) : (),
+	);
 	return fail($error) if defined $error;
+	$obj->mgr->readonly(1); # the daemon runs as nobody
 
 	$session->{obj} = $obj;
 	return ok("hello");

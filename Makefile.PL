@@ -8,7 +8,7 @@ WriteMakefile(
 	ABSTRACT_FROM  => 'lib/Net/MitDK.pm',
 	VERSION_FROM   => 'lib/Net/MitDK.pm',
         EXE_FILES      => [
-		map { "bin/mitdk$_" } qw(2pop -dump -authenticate -renew-lease),
+		map { "bin/mitdk$_" } qw(2pop -dump -authenticate -renew-lease -install-win32),
 	],
         LICENSE        => 'freebsd',
 	PREREQ_PM      => {
