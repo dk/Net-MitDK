@@ -25,7 +25,7 @@ my ($server, $error, $e);
 my ($state, $code_challenge, $code_verifier, $nonce);
 my $ua = IO::Lambda::HTTP::UserAgent->new;
 my $mgr = Net::MitDK::ProfileManager->new;
-my $profile = '';
+my $profile = [$mgr->list]->[0] // 'default';
 
 sub socket_check
 {
@@ -45,9 +45,10 @@ sub init_oauth
 	$code_challenge = encode_base64url(sha256($code_verifier));
 }
 
-sub mailcheck { $win32_install ?  '<p><a href="/testmail">Test MitDK login</a>' : '' }
+sub mailcheck { '<p><a href="/testmail">Test MitDK login</a>'  }
 sub quit      { '<p><a href="/abort">Quit the wizard</a><p>' }
 sub main      { '<p><a href="/">Go back to the start</a><p>' }
+sub profile   { '<p><a href="/profile">Change profile (' . $profile . ')</a><p>' }
 
 sub html($)
 {
@@ -65,7 +66,37 @@ sub error($)   { h2x( 'Error', $_[0] ) }
 
 my %routes;
 %routes = (
-	'/win32_install' => sub { html <<'WIN32_INSTALL' . mailcheck . quit
+	'/profile' => sub {
+		my $combo = '';
+		for ($mgr->list) {
+			$combo .= "<option value='$_' " .
+				(($_ eq $profile) ? ' default' : '').
+				">$_</option>\n";
+		}
+		html <<PROFILE . main
+<h2>Change profile</h2>
+<p>
+Current profile: <b>$profile</b>.
+<p>
+<form action="/profile_do" method="POST">
+<select name="profile">$combo</select><p>
+Create new profile:<br><input type="text" value="" name="new"><p>
+<input type="submit" name="submit" value="Change">
+</form>
+PROFILE
+	},
+
+	'/profile_do' => sub {
+		my $req = shift;
+		return error("bad response") unless $req->method eq 'POST';
+		my %param = map { m/^(\w+)=(.*)$/ } split '&', $req->content;
+		my $pr = length($param{new}) ? $param{new} : $param{profile};
+		return error("only alphanumerics please") unless $pr =~ m/^\w+$/;
+		$profile = $pr;
+		return $routes{'/'}->();
+	},
+
+	'/win32_install' => sub { html <<'WIN32_INSTALL' . mailcheck . profile . quit
 <h2>Welcome to the MitDK/Nemid setup</h2><p>
 First you need to install a POP3 proxy server and lease refresh server that will start with Windows.<p>
 <form action="/win32_install_do" method="POST">
@@ -81,7 +112,7 @@ WIN32_INSTALL
 
 	'/win32_install_do' => sub {
 		my $req = shift;
-		return (undef, "bad response") unless $req->method eq 'POST';
+		return error("bad response") unless $req->method eq 'POST';
 		if ( $req->content =~ /^install/) {
 			my $resp = `mitdk-install-win32 install 2>&1`;
 			return error "Something wrong happened:<p><pre>$resp</pre>" unless $resp =~ /LOOKS OKAY/;
@@ -112,12 +143,12 @@ WIN32_INSTALL
 	},
 	'/auth' => sub {
 
-		html <<INIT . quit;
+		html <<INIT . ($win32_install ? main : '' ) . mailcheck . profile . quit;
 <h2>Welcome to the MitDK/Nemid authenticator setup</h2>
 <p>
 You shall need to login to NemID to create an initial login token for this mitdk program.
 Thereafter the program should be able to login to MitID by itself.<br>The token will be saved in
-<code>${\($mgr->homepath . q(/default.profile))}</code>. Refer to the documentation
+<code>${\($mgr->homepath . q(/) . $profile . q(.profile))}</code>. Refer to the documentation
 if you need more than one user per installation.
 
 <form action="/step2" method="POST">
@@ -195,19 +226,20 @@ INIT
 		eval { $json = decode_json( $resp->content ); };
 		return error("Got bad response from MitDK") unless $json && $json->{access_token};
 
-		my ($ok, $error) = Net::MitDK->new->first_login($json)->wait;
+		my ($ok, $error) = Net::MitDK->new(profile => $profile)->first_login($json)->wait;
 		return error("Cannot get first re-authorization: $error") unless $ok;
 
 		return html '<h2>Logged in to MidDK!</h2><p>Now you can start the mitdk server' . mailcheck . main . quit;
 	},
 
 	'/testmail' => sub {
-		my $e = Net::MitDK->new;
+		my ($e, $error) = Net::MitDK->new( profile => $profile );
+		return error $error unless $e;
 		my $m;
 		($m, $error) = $e->mailboxes->wait;
 		return error $error unless $m;
 		return html "<h2>Welcome, $m->{ownerName}!</h2><p>".
-			'Looks like you have it configured and logged in correctly' . main . quit;
+			'Looks like you have it configured and logged in correctly' . profile . main . quit;
 	},
 
 	'/abort' => sub {

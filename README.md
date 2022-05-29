@@ -107,6 +107,15 @@ The saved lease is located in your home directory
 ( run `perl -MNet::MitDK -le "print Net::MitDK::ProfileManager->new->homepath"` if in doubt ),
 move it to another server. Make sure the `mitdk-renew-lease` is not running on the old server.
 
+Multi-user installation
+-----------------------
+
+The module and the POP3 server can operate on several users. By default, there is just one
+default profile in `$HOME/.mitdk/default.profile` that is getting renewed. However you may
+rename it to whatever name.profile, and have more than one. The authenticator will allow
+you to switch between profiles for different NemID users, and the lease renewer will pick up
+new profiles automatically. The profile name can be used as login name in the POP3 proxy, too.
+
 Operations
 ==========
 

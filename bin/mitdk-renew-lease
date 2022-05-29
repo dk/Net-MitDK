@@ -53,8 +53,10 @@ sub renew
 {
 	my $profile = shift;
 	my ($e, $error) = Net::MitDK->new(profile => $profile);
+	die "error (profile=$profile): $error\n" unless $e;
+	die "error (profile=$profile): bad profile\n" unless ref($e->token) eq 'HASH';
+
 	print "loaded profile $profile, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
-	die "error: $error\n" unless $e;
 
 	my $maybe_expired = time > $e->token->{dpp}->{expires_on};
 	if ( $maybe_expired && $e->config->{renewer}->{expired} ) {
@@ -80,7 +82,7 @@ sub renew
 			$e->config->{renewer}->{expired} = 1;
 			$e->update_config;
 		}
-		die "error: $error\n";
+		die "error (profile=$profile): $error\n";
 	}
 
 	print "renewed, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
