@@ -1,7 +1,7 @@
 #! env perl
 use strict;
 use warnings;
-BEGIN { $ENV{IO_LAMBDA_DEBUG} = "select=2,io=2,lambda=2"; }
+# BEGIN { $ENV{IO_LAMBDA_DEBUG} = "select=2,io=2,lambda=2"; }
 use Getopt::Long;
 use Socket;
 use IO::Socket;
