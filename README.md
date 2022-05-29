@@ -90,11 +90,22 @@ Lease renewal
 MidDK only allows sessions for 20 minutes, then it requires a NemID relogin.
 Therefore there is added a daemon, `mitdk-renew-lease`. You can run it from
 cron (unix), or as a standalone program as `mitdk-renew-lease -la` (windows).
-It then will renegotiate a lease every 10 minutes.
+It then will renegotiate a lease every 10 minutes. If you installed the module
+using `mitdk-install-win32` as described above, this program is added to your
+startup folder automatically.
 
-If for some reason the lease expires, it will warn you (once), but there's no
-need to restart it after you made a successful relogin with
-`mitdk-authenticate`.
+Unix/cron: If for some reason the lease expires, it will warn you (once)
+through cron mail. Windows: otherwise there's no need to restart it after you
+made a successful relogin with `mitdk-authenticate`.
+
+Lease migration
+---------------
+
+If you cannot run a browser to authenticate with NemID on the server that will be used for mail
+fetching, or you want to migrate to another server, you will need the saved lease moved.
+The saved lease is located in your home directory 
+( run `perl -MNet::MitDK -le "print Net::MitDK::ProfileManager->new->homepath"` if in doubt ),
+move it to another server. Make sure the `mitdk-renew-lease` is not running on the old server.
 
 Operations
 ==========
@@ -117,6 +128,9 @@ to spam your mail by MitDK. You can run everything on a single desktop.
 
 2) Connect your mail client to POP3 server at localhost, where username is
 'default' and password is empty string.
+
+If you followed windows installation steps above, this is the option that 
+the installer program set up for you.
 
 Use on mail server
 ------------------
