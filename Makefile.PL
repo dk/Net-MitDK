@@ -13,7 +13,8 @@ WriteMakefile(
         LICENSE        => 'freebsd',
 	PREREQ_PM      => {
 		'LWP'             => 0,
-		'IO::Lambda'      => 1.30,
+		'IO::Lambda'      => 1.31,
+		'DateTime'        => 0,
 		'MIME::Entity'    => 0,
 		'MIME::Base64'    => 0,
 		'JSON::XS'        => 0,
