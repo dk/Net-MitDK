@@ -63,30 +63,24 @@ sub renew
 
 	print "loaded profile $profile, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
 
-	my $maybe_expired = time > $e->token->{dpp}->{expires_on};
-	if ( $maybe_expired && $e->config->{renewer}->{expired} ) {
-		print "is expired and notification was done already, skipping\n" if $opt{verbose};
-		return;
-	}
-
 	if ( $opt{dry}) {
 		print "not renewed as running read-only\n" if $opt{verbose};
 		return;
 	}
 
-	if ( exists $e->config->{renewer}->{expired}) {
-		delete $e->config->{renewer}->{expired};
-		$e->update_config;
-	}
 
 	my $ok;
 	($ok, $error) = $e->renew_lease->wait;
 	if ( !$ok ) {
-		if ( $maybe_expired ) {
-			print "will skip this error next time\n" if $opt{verbose};
-			$e->config->{renewer}->{expired} = 1;
-			$e->update_config;
+		my $newerr = $error;
+		$newerr =~ s/traceId\:\s+\S+//g;
+		if (( $e->config->{renewer}->{error} // '') eq $newerr) {
+			print "Skipping repetitive error $error\n";
+			return;
 		}
+
+		$e->config->{renewer}->{error} = $newerr;
+		$e->update_config;
 		die "error (profile=$profile): $error\n";
 	}
 
