@@ -82,6 +82,9 @@ sub renew
 		$e->config->{renewer}->{error} = $newerr;
 		$e->update_config;
 		die "error (profile=$profile): $error\n";
+	} elsif ( defined $e->config->{renewer}->{error}) {
+		delete $e->config->{renewer}->{error};
+		$e->update_config;
 	}
 
 	print "renewed, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
