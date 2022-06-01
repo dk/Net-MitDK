@@ -1,6 +1,7 @@
 #!env perl
 use strict;
 use warnings;
+use subs 'log';
 use Fcntl ':flock', ':seek';
 use IO::Handle;
 use IO::Socket;
@@ -49,6 +50,11 @@ GetOptions(\%opt,
 
 $opt{help} and usage();
 
+sub log($)
+{
+	print "$_[0]\n" if $opt{verbose};
+}
+
 sub renew
 {
 	my $profile = shift;
@@ -57,14 +63,14 @@ sub renew
 	die "error (profile=$profile): bad profile\n" unless ref($e->config) eq 'HASH';
 
 	unless ( $e->token ) {
-		print "$profile: no first login yet\n" if $opt{verbose};
+		log "$profile: no first login yet";
 		return;
 	}
 
-	print "loaded profile $profile, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
+	log "loaded profile $profile, expires on " . localtime($e->token->{dpp}->{expires_on});
 
 	if ( $opt{dry}) {
-		print "not renewed as running read-only\n" if $opt{verbose};
+		log "not renewed as running read-only";
 		return;
 	}
 
@@ -72,10 +78,15 @@ sub renew
 	my $ok;
 	($ok, $error) = $e->renew_lease->wait;
 	if ( !$ok ) {
+		if ( $error =~ /Rest Exception\: \<ServerErrorException\>/) {
+			# everyone should wrap xml errors in json
+			log "skipping error: $error";
+			return;
+		}
 		my $newerr = $error;
 		$newerr =~ s/traceId\:\s+\S+//g;
 		if (( $e->config->{renewer}->{error} // '') eq $newerr) {
-			print "Skipping repetitive error $error\n";
+			log "Skipping repetitive error $error";
 			return;
 		}
 
@@ -87,7 +98,7 @@ sub renew
 		$e->update_config;
 	}
 
-	print "renewed, expires on " . localtime($e->token->{dpp}->{expires_on}) . "\n" if $opt{verbose};
+	log "renewed, expires on " . localtime($e->token->{dpp}->{expires_on});
 }
 
 my ($server, $sno);
@@ -103,7 +114,7 @@ if ( $opt{port} ) {
 			ReuseAddr => ($^O !~ /win32/i),
 		);
 		die "Cannot listen on port $opt{port} : $!\n" unless $server;
-		print "Listening on $opt{port}\n" if $opt{verbose};
+		log "Listening on $opt{port}";
 		$sno = '';
 		vec($sno, fileno($server), 1) = 1;
 	}
@@ -150,14 +161,14 @@ if ($opt{loop}) {
 		my $n = select($R, undef, undef, $timeout);
 		if ( $n ) {
 			my $h = IO::Handle-> new;
-			print "New control connection\n" if $opt{verbose};
+			log "New control connection";
 			if ( accept( $h, $server) ) {
 				my $cmd = <$h>;
 				chomp $cmd;
-				print "Got command: $cmd\n" if $opt{verbose};
+				log "Got command: $cmd";
 				close $h;
 				if ( $cmd eq 'stop') {
-					print "Exiting\n" if $opt{verbose};
+					log "Exiting";
 					exit(0);
 				}
 			}
