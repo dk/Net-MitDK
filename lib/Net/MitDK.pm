@@ -153,8 +153,6 @@ sub renew_lease
 {
 	my ($self) = @_;
 	my $token = $self->config->{token};
-	return lambda {undef, "expired"}
-		if $token->{dpp}->{expires_on} < time || $token->{ngdp}->{expires_on} < time;
 	return $self->authorization_refresh( $token->{dpp}->{refresh_token}, $token->{ngdp}->{refresh_token});
 }
 
