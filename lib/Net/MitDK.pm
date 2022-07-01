@@ -496,9 +496,11 @@ sub save
 	unless ( -d $home ) {
 		mkdir $home or return (undef, "Cannot create $home: $!");
 		return (undef, "cannot chmod 0750 $home:$!") unless chmod 0750, $home;
-		my ($name,$passwd,$uid,$gid) = getpwnam('nobody');
-		return (undef, "no user `nobody`") unless defined $name;
-		return (undef, "cannot chown user:$name $home:$!") unless chown $>, $gid, $home;
+		if ( $^O !~ /win32/i) {
+			my ($name,$passwd,$uid,$gid) = getpwnam('nobody');
+			return (undef, "no user `nobody`") unless defined $name;
+			return (undef, "cannot chown user:$name $home:$!") unless chown $>, $gid, $home;
+		}
 	}
 
 	my $json;
