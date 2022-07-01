@@ -26,7 +26,19 @@ my ($server, $error, $e);
 my ($state, $code_challenge, $code_verifier, $nonce);
 my $ua = IO::Lambda::HTTP::UserAgent->new;
 my $mgr = Net::MitDK::ProfileManager->new;
-my $profile = [$mgr->list]->[0] // 'default';
+my $profile = [$mgr->list]->[0];
+
+unless ( defined $profile ) {
+	print "Creating default profile...";
+	$profile = 'default';
+	my ( $ok, $error ) = $mgr->create($profile);
+	if ( $ok ) {
+		print "ok\n";
+	} else {
+		print "error: $!\n";
+		exit 1;
+	}
+}
 
 sub socket_check
 {
