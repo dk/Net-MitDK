@@ -84,6 +84,8 @@ sub handle_saml
 	return error "Cannot get NemID ticket" unless $resp->content =~ /name="(SAMLResponse)" value="(.*?)"/;
 	my $saml = "$1=" . uri_escape($2);
 
+	# Morten Helmstedt reports that this is the new URL
+	# https://gateway.digitalpost.dk/auth/s9/mit-dk-nemlogin/ssoack
 	$resp = $ua->request( HTTP::Request::Common::POST(
 		'https://gateway.digitalpost.dk/auth/s9/nemlogin/ssoack',
 		Content => $saml
