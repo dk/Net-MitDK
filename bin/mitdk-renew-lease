@@ -78,7 +78,7 @@ sub renew
 	my $ok;
 	($ok, $error) = $e->renew_lease->wait;
 	if ( !$ok ) {
-		if ( $error =~ /Rest Exception\: \<ServerErrorException\>/) {
+		if ( $error =~ /(Rest Exception\: \<ServerErrorException\>|Status 500|Internal Server Error/) {
 			# everyone should wrap xml errors in json
 			log "skipping error: $error";
 			return;
