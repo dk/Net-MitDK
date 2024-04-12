@@ -538,9 +538,9 @@ sub save
 
 	if ( $^O !~ /win32/i) {
 		return (undef, "cannot chmod 0640 $file:$!") unless chmod 0640, $file;
-		my ($name,$passwd,$uid,$gid) = getpwnam('nobody');
-		return (undef, "no user `nobody`") unless defined $name;
-		return (undef, "cannot chown user:$name $file:$!") unless chown $>, $gid, $file;
+		my (undef,undef,$gid) = getgrnam('nobody');
+		return (undef, "no group `nobody`") unless defined $gid;
+		return (undef, "cannot chown user:nobody $file:$!") unless chown $>, $gid, $file;
 	}
 
 	$self->{timestamps}->{$profile} = time;

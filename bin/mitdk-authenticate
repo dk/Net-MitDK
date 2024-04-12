@@ -48,7 +48,7 @@ unless ( defined $profile ) {
 	if ( $ok ) {
 		print "ok\n";
 	} else {
-		print "error: $!\n";
+		print "error: $error\n";
 		exit 1;
 	}
 }

@@ -84,10 +84,13 @@ should work.
 
 **Security note**:
 
-Make sure that the content of .mitdk directory is only readable to you.
-By default, on unix installation, the directory and the files will be readable
-and writable by you and readable by user `nobody`. The latter is needed because
-the mitdk2pop server runs as `nobody` and needs to use the login leases.
+Make sure that the content of .mitdk directory is only readable to you.  By
+default, on unix installation, the directory and the files will be readable and
+writable by you and readable by group `nobody`. The latter is needed because
+the mitdk2pop server runs as `nobody` and needs to use the login leases.  Run
+`sudo adduser nobody` and/or `sudo addgroup nobody` if needed.  You may also
+need to add yourself to the group `nobody` if you want to let the utilities to
+create profiles for you.
 
 Lease renewal
 -------------
