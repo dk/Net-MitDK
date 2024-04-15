@@ -5,7 +5,7 @@ use warnings;
 
 package main;
 use IO::Socket::INET;
-use IO::Lambda v1.33 '(:all)';
+use IO::Lambda v1.33 ':all';
 use IO::Lambda::HTTP::Client qw(http_request);
 use IO::Lambda::HTTP::Server;
 use IO::Lambda::HTTP::UserAgent;
