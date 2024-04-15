@@ -364,8 +364,9 @@ sub assemble_mail
 	}
 	$received = $date->strftime('%a, %d %b %Y %H:%M:%S %z');
 
+	my $from = $self->config->{email_from} // 'noreply@mit.dk';
 	my $mail = MIME::Entity->build(
-		From          => ( safe_encode('MIME-Q', $sender) . ' <noreply@mit.dk>' ) ,
+		From          => ( safe_encode('MIME-Q', $sender) . " <$from>" ) ,
 		To            => ( safe_encode('MIME-Q', $self->{session}->{mailboxes}->{ownerName}) . ' <' . ( $ENV{USER} // 'you' ) . '@localhost>' ),
 		Subject       => safe_encode('MIME-Header', $msg->{label}),
 		Data          => encode('utf-8', "Mail from $sender"),

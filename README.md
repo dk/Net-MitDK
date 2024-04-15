@@ -209,7 +209,12 @@ setup is basically same as in previous section, but see
 
 The problem you might encounter is that the module generates mails as
 originated from `noreply@mit.dk` and f.ex. Gmail won't accept that due to
-[SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework). See if rewriting
+[SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework). In the
+authenticator web setup you can change the default email to one that matches
+your sending domain. If you own that domain, consider adding the SPF TXT
+record to it, something like "v=spf1 a mx ip4:1.2.3.4 ~all".
+
+Alternatively see if rewriting
 the sender as in `examples/procmail.forward.srs` helps.
 
 Enjoy!

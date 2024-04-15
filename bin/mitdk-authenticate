@@ -61,6 +61,7 @@ sub init_oauth
 	$code_challenge = encode_base64url(sha256($code_verifier));
 }
 
+sub setfrom   { '<p><a href="/setfrom">Set "From:" email address</a>'  }
 sub mailcheck { '<p><a href="/testmail">Test MitDK login</a>'  }
 sub quit      { '<p><a href="/abort">Quit the wizard</a><p>' }
 sub main      { '<p><a href="/">Go back to the start</a><p>' }
@@ -112,7 +113,17 @@ sub handle_saml
 	my ($ok, $error) = Net::MitDK->new(profile => $profile)->first_login($json)->wait;
 	return error("Cannot get first re-authorization: $error") unless $ok;
 
-	return html '<h2>Logged in to MidDK!</h2><p>Now you can start the mitdk server' . mailcheck . main . quit;
+	return html '<h2>Logged in to MidDK!</h2><p>Now you can start the mitdk server' . mailcheck . setfrom . main . quit;
+}
+
+sub params
+{
+	map {
+		m/^(\w+)=(.*)$/;
+		my ($k,$v) = ($1,$2);
+		$v =~ s/%(..)/chr(hex($1))/ge;
+		($k, $v);
+	} split '&', $_[0];
 }
 
 my %routes;
@@ -140,7 +151,7 @@ PROFILE
 	'/profile_do' => sub {
 		my $req = shift;
 		return error("bad response") unless $req->method eq 'POST';
-		my %param = map { m/^(\w+)=(.*)$/ } split '&', $req->content;
+		my %param = params($req->content);
 		my $pr = length($param{new}) ? $param{new} : $param{profile};
 		return error("only alphanumerics please") unless $pr =~ m/^\w+$/;
 		$profile = $pr;
@@ -151,7 +162,38 @@ PROFILE
 		return $routes{'/'}->();
 	},
 
-	'/win32_install' => sub { html <<'WIN32_INSTALL' . mailcheck . profile . quit
+	'/setfrom' => sub {
+		my ($e, $error) = Net::MitDK->new( profile => $profile );
+		return error $error unless $e;
+		my $from = $e->config->{email_from} // 'noreply@mit.dk';
+		html <<PROFILE . main
+<h2>Set "From:" email address</h2>
+<p>
+If you need to forward MitDK messages to your email, many modern servers won't accept it
+if their <a href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a> policy
+doesn't allow that. See 'Automated forwarding" section in the docs.
+<p>
+<form action="/setfrom_do" method="POST">
+<input name="from" value="$from"><p>
+<input type="submit" name="submit" value="Change">
+</form>
+PROFILE
+	},
+
+	'/setfrom_do' => sub {
+		my $req = shift;
+		return error("bad response") unless $req->method eq 'POST';
+		my %param = params($req->content);
+
+		return error("bad email format") unless $param{from} =~ /^([^\@]+)\@.+$/;
+		my ($e, $error) = Net::MitDK->new( profile => $profile );
+		return error $error unless $e;
+		$e->config->{email_from} = $param{from};
+		$e->update_config;
+		return $routes{'/'}->();
+	},
+
+	'/win32_install' => sub { html <<'WIN32_INSTALL' . mailcheck . setfrom . profile . quit
 <h2>Welcome to the MitDK/Nemid setup</h2><p>
 First you need to install a POP3 proxy server and lease refresh server that will start with Windows.<p>
 <form action="/win32_install_do" method="POST">
@@ -198,7 +240,7 @@ WIN32_INSTALL
 	},
 	'/auth' => sub {
 
-		html <<INIT . ($win32_install ? main : '' ) . mailcheck . profile . quit;
+		html <<INIT . ($win32_install ? main : '' ) . mailcheck . setfrom . profile . quit;
 <h2>Welcome to the MitDK/Nemid authenticator setup</h2>
 <p>
 You shall need to login to NemID to create an initial login token for this mitdk program.
