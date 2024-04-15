@@ -1,21 +1,11 @@
 #!perl
+#BEGIN { $ENV{IO_LAMBDA_DEBUG} = 'http=2' }
 use strict;
 use warnings;
 
-package Step2;
-use base 'IO::Lambda::HTTP::Client';
-
-sub redirect
-{
-	my $uri = shift->SUPER::redirect(@_);
-	$uri->path('/login.aspx/noeglekort') if $uri->path eq '/login.aspx/mitid';
-	return $uri;
-}
-
 package main;
-# BEGIN { $ENV{IO_LAMBDA_DEBUG} = 'http=2' }
 use IO::Socket::INET;
-use IO::Lambda qw(:all);
+use IO::Lambda v1.33 '(:all)';
 use IO::Lambda::HTTP::Client qw(http_request);
 use IO::Lambda::HTTP::Server;
 use IO::Lambda::HTTP::UserAgent;
@@ -257,7 +247,6 @@ INIT
 					'lang=en_US'
 				),
 				max_redirect => 20,
-				class        => 'Step2',
 			);
 			tail {
 				my $resp = shift;
@@ -274,27 +263,27 @@ INIT
 	},
 
 	# case with private only
-	'/noeglekort' => sub {
+	'/mitid' => sub {
 		my $req = shift;
-		$req->uri("https://nemlog-in.mitid.dk/login.aspx/noeglekort");
-		$req->header( Referer => 'https://nemlog-in.mitid.dk/login.aspx/noeglekort');
+		$req->uri("https://nemlog-in.mitid.dk/login/mitid");
+		$req->header( Referer => 'https://nemlog-in.mitid.dk/login/mitid');
 		$req->header( Host    => 'nemlog-in.mitid.dk');
 		$req->header( Origin  => 'https://nemlog-in.mitid.dk');
 		$req->header( 'Accept-Encoding' => 'identity');
 		$req->headers->remove_header('Cookie');
 		my $resp = $ua->request($req)->wait;
 		return $resp unless $resp->is_success;
-		return $resp if $resp->request->uri->path =~ /LoginOption.aspx/;
+		return $resp if $resp->request->uri->path =~ /loginoption$/;
 		return handle_saml($resp);
 	},
 
 	# case with sub-select (private and firma(s))
-	'/LoginOption.aspx' => sub  {
+	'/loginoption' => sub  {
 		my $req = shift;
 		$req->uri("https://nemlog-in.mitid.dk".$req->uri);
 		$req->header( Host    => 'nemlog-in.mitid.dk');
 		$req->header( Origin  => 'https://nemlog-in.mitid.dk');
-		$req->header( Referer => 'https://nemlog-in.mitid.dk/LoginOption.aspx');
+		$req->header( Referer => 'https://nemlog-in.mitid.dk/loginoption');
 		$req->header( 'Accept-Encoding' => 'identity');
 		$req->headers->remove_header('Cookie');
 		my $resp = $ua->request($req)->wait;
@@ -334,7 +323,8 @@ $routes{'/'} = $win32_install ? $routes{'/win32_install'} : $routes{'/auth'};
 			$req->header( Origin => $origin);
 		}
 		if ( my $referer = $req->header('Referer')) {
-			$referer =~ s[http://localhost:9999/step2][https://nemlog-in.mitid.dk/login.aspx/noeglekort];
+			$referer =~ s[http://localhost:9999/step2][https://nemlog-in.mitid.dk/login/mitid];
+			$referer =~ s[http://localhost:9999/][https://nemlog-in.mitid.dk/login/mitid];
 			$req->header( Referer => $referer);
 		}
 		$req->headers->remove_header('Cookie');
