@@ -21,8 +21,8 @@ To sidestep that, the authentication must be done with browser security settings
 lowered. You may want to use a standalone instance of a browser to it doesn't mess
 with your main security settings.
 
-* Chrome on Windows: create a folder f.ex "C:\chrome.nosec" and run
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\chrome.nosec"
+* Chrome on Windows: create a folder f.ex `C:\chrome.nosec` and run
+`"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\chrome.nosec"`
 
 * Chrome on Linux: basically same, `mkdir /tmp/chrome` and `chrome --disable-web-security --user-data-dir=/tmp/chrome`
 
@@ -212,7 +212,7 @@ originated from `noreply@mit.dk` and f.ex. Gmail won't accept that due to
 [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework). In the
 authenticator web setup you can change the default email to one that matches
 your sending domain. If you own that domain, consider adding the SPF TXT
-record to it, something like "v=spf1 a mx ip4:1.2.3.4 ~all".
+record to it, something like `v=spf1 a mx ip4:1.2.3.4 ~all`.
 
 Alternatively see if rewriting
 the sender as in `examples/procmail.forward.srs` helps.
