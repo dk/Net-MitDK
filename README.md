@@ -15,10 +15,10 @@ Browser security
 Important: The authentication step proxies some requests and that doesn't go well with
 the [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) policy.
 That's why if you try to start the authentication in a normal browser window, you
-will no be able to see the MitID login window, but get an error instead.
+will not be able to see the MitID login window, but get an error instead.
 
-To sidestep that, the authentication must be done with browser security settings
-lowered. You may want to use a standalone instance of a browser to it doesn't mess
+To sidestep that, the authentication must be done with some browser security settings
+lowered. You may want to use a standalone instance of a browser so it doesn't mess
 with your main security settings.
 
 * Chrome on Windows: create a folder f.ex `C:\chrome.nosec` and run
@@ -35,7 +35,12 @@ add `Access-Control-Allow-Origin: *` to all responses, kindly ping me back.
 Unix/Linux
 ----------
 
-* Install this module by opening command line and typing `cpan Net::MitDK` (with `sudo` if needed)
+* Install this module by opening command line and typing `cpan Net::MitDK` (with `sudo` if needed).
+
+* Make sure group `nobody` is present. Run `sudo addgroup nobody` if needed.
+You may also add yourself to the group `nobody` if you want to let the
+utilities to edit your profile settings, by running `sudo usermod -a -G nobody
+$$USER`.
 
 * Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser, and login to MitID as described below.
 
@@ -94,7 +99,7 @@ personal MitID signature. Run `mitdk-authenticate` to start a small webserver
 on `http://localhost:9999/`, where you will need to connect to with a browser
 (the Windows installer will run it for you). There, it will will try to show a
 standard MitID window. If it fails with an error, make sure you lowered
-the security level (see "Browser security" above).
+the security level (see the "Browser security" section above).
 
 You will need to log in there, in the way you usually do, using the MitID app,
 and then confirm the request from MitDK. If that works, the script will create
@@ -113,10 +118,7 @@ should work.
 Make sure that the content of .mitdk directory is only readable to you.  By
 default, on unix installation, the directory and the files will be readable and
 writable by you and readable by group `nobody`. The latter is needed because
-the mitdk2pop server runs as `nobody` and needs to use the login leases.  Run
-`sudo adduser nobody` and/or `sudo addgroup nobody` if needed.  You may also
-need to add yourself to the group `nobody` if you want to let the utilities to
-create profiles for you.
+the mitdk2pop server runs as `nobody` and needs to use the login leases.
 
 Lease renewal
 -------------
@@ -150,7 +152,7 @@ move it to another server. Make sure the `mitdk-renew-lease` is not running on t
 Multi-user installation
 -----------------------
 
-The module and the POP3 server can operate on several users. By default, there is just one
+The module and the POP3 server can operate for several users. By default, there is just one
 default profile in `$HOME/.mitdk/default.profile` that is getting renewed. However you may
 rename it to whatever name.profile, and have more than one. The authenticator will allow
 you to switch between profiles for different MitID users, and the lease renewer will pick up

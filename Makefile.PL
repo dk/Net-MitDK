@@ -29,3 +29,9 @@ WriteMakefile(
 		},
 	},
 );
+
+if ( $^O !~ /win32/i) {
+	my (undef,undef,$gid); = getgrnam('nobody');
+	warn "\n** Warning: group `nobody` not found. Run `sudo addgroup nobody` if you need to run mitdk2pop\n";
+}
+
