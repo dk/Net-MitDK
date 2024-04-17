@@ -42,7 +42,8 @@ You may also add yourself to the group `nobody` if you want to let the
 utilities to edit your profile settings, by running `sudo usermod -a -G nobody
 $$USER`.
 
-* Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser, and login to MitID as described below.
+* Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser with
+* lowered security, and login to MitID as described below.
 
 * Add `mitdk-renew-lease -a` in a new cron job as yourself (see 'examples/cron'):
   - Run ``perl -le 'print q(*/10 * * * * ).($_=`which mitdk-renew-lease`,chomp,$_).q( -a)'``
