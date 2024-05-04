@@ -91,7 +91,6 @@ Quit the setup.
 * Windows: run `mitdk-install-win32` and start the servers in the browser-based setup.
 Quit the setup.
 
-
 One-time MitID registration
 ---------------------------
 
@@ -216,6 +215,9 @@ originated from `noreply@mit.dk` and f.ex. Gmail won't accept that due to
 authenticator web setup you can change the default email to one that matches
 your sending domain. If you own that domain, consider adding the SPF TXT
 record to it, something like `v=spf1 a mx ip4:1.2.3.4 ~all`.
+
+The `mitdk-authenticate` script may help you here, you can change the
+default mail *From* address.
 
 Alternatively see if rewriting
 the sender as in `examples/procmail.forward.srs` helps.
