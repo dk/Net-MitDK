@@ -40,12 +40,12 @@ Unix/Linux
 * Make sure group `nobody` is present. Run `sudo addgroup nobody` if needed.
 You may also add yourself to the group `nobody` if you want to let the
 utilities to edit your profile settings, by running `sudo usermod -a -G nobody
-$$USER`.
+$USER`.
 
 * Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser with
-* lowered security, and login to MitID as described below.
+lowered security, and login to MitID as described below.
 
-* Add `mitdk-renew-lease -a` in a new cron job as yourself (see 'examples/cron'):
+* Add `mitdk-renew-lease -a` in a new cron job as yourself (see `examples/cron`):
   - Run ``perl -le 'print q(*/10 * * * * ).($_=`which mitdk-renew-lease`,chomp,$_).q( -a)'``
   - Run `crontab -e` and add this line
 
@@ -105,7 +105,7 @@ You will need to log in there, in the way you usually do, using the MitID app,
 and then confirm the request from MitDK. If that works, the script will create
 an authorization token and save it in your home catalog under
 `.mitdk/default.profile`. This token will be used for password-less logins to
-the MitDK site. In case it expires, in will need to be renewed using the same
+the MitDK site. In case it expires, it will need to be renewed using the same
 procedure.
 
 In case you never logged in to the Digital Post, you'll get a login error.
@@ -212,21 +212,18 @@ setup is basically same as in previous section, but see
 The problem you might encounter is that the module generates mails as
 originated from `noreply@mit.dk` and f.ex. Gmail won't accept that due to
 [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework). In the
-authenticator web setup you can change the default email to one that matches
+authenticator web setup you can change the default *From* email to one that matches
 your sending domain. If you own that domain, consider adding the SPF TXT
 record to it, something like `v=spf1 a mx ip4:1.2.3.4 ~all`.
 
-The `mitdk-authenticate` script may help you here, you can change the
-default mail *From* address.
-
-Alternatively see if rewriting
-the sender as in `examples/procmail.forward.srs` helps.
+Alternatively see if rewriting the sender as in `examples/procmail.forward.srs`
+helps.
 
 Enjoy!
 
 Thanks to:
 ----------
 
-Morten Helmstedt
+Morten Helmstedt,
 Anders Peter Fugmann
 
