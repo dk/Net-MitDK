@@ -1,5 +1,6 @@
 # install me with this:
 #
+# edit your USER below or the whole path below, if needed
 # sudo cp example/mitdk2pop.service /usr/lib/systemd/system
 # systemctl enable mitdk2pop
 # systemctl start mitdk2pop
@@ -10,6 +11,8 @@ After=network.target
 
 [Service]
 Type=simple
+# $HOME should point to the location of the .mitdk directory, which in turn should be 0750 USER/nobody
+Environment=HOME=/home/USER # <-- !!! CHANGE THIS!!!
 ExecStart=/usr/local/bin/mitdk2pop -p 8111
 User=nobody
 Restart=always

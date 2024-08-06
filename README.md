@@ -37,10 +37,12 @@ Unix/Linux
 
 * Install this module by opening command line and typing `cpan Net::MitDK` (with `sudo` if needed).
 
-* Make sure group `nobody` is present. Run `sudo addgroup nobody` if needed.
+* Make sure group `nobody` and user `nobody` are present. Run `sudo addgroup/adduser nobody` if needed.
+Also make sure that the user nobody is a member of the group nobody. (`perl
+Makefile.PL` will complain if this is not on order).
+
 You may also add yourself to the group `nobody` if you want to let the
-utilities to edit your profile settings, by running `sudo usermod -a -G nobody
-$USER`.
+utilities to edit your profile settings, by running `sudo usermod -a -G nobody $USER`.
 
 * Run `mitdk-authenticate`, open `http://localhost:9999/` in the browser with
 lowered security, and login to MitID as described below.
@@ -190,7 +192,7 @@ This is the setup I use on my own remote server, where I connect to using
 email clients to read my mail.
 
 1) Create a startup script, f.ex. for FreeBSD see `example/mitdk2pop.freebsd`,
-and for Debian/Ubuntu see `examples/mitdk2pop.debian`
+and for systemd-based unices see `examples/eboks2pop.service`.
 
 2) Install *procmail* and *fetchmail*. Look into `example/procmailrc.local` and
 and `examples/fetchmail` (the latter needs to have permissions 0600). 
