@@ -13,5 +13,5 @@ command=/usr/sbin/daemon
 pidfile=/var/run/mitdk2pop.pid
 procname=/usr/local/bin/mitdk2pop
 command_interpreter=perl
-command_args="-u nobody -p $pidfile $procname -p 8111"
+command_args="-u nobody -p $pidfile $procname -p 8111 -a 127.0.0.1"
 run_rc_command "$1"

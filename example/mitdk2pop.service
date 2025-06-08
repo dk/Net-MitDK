@@ -13,7 +13,7 @@ After=network.target
 Type=simple
 # $HOME should point to the location of the .mitdk directory, which in turn should be 0750 USER/nobody
 Environment=HOME=/home/USER # <-- !!! CHANGE THIS!!!
-ExecStart=/usr/local/bin/mitdk2pop -p 8111
+ExecStart=/usr/local/bin/mitdk2pop -p 8111 -a 127.0.0.1
 User=nobody
 Restart=always
 
