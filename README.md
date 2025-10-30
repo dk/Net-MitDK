@@ -110,6 +110,14 @@ an authorization token and save it in your home catalog under
 the MitDK site. In case it expires, it will need to be renewed using the same
 procedure.
 
+NB: if you see the error "you have already logged in" or "you cannot have two sessions",
+use these to sidestep:
+
+1: When you see the invitation to MitID login, "FORTSÆT TIL LOGIN", open the dev console
+first by hitting the F12 key. Then procees
+2: MitID defence check will halt execution on some random javascript debugger statement.
+3: Close the dev console - after that the proper MitID login window should appear.
+
 In case you never logged in to the Digital Post, you'll get a login error.
 You shall need to log in manually to the website, eventually fill your phone
 number and contact email, and accept the conditions. After that, the login
